@@ -8,14 +8,12 @@ library(tidyverse)
 library(stringdist)
 library(fastLink)
 echo <- read.csv("/Users/lpoirier/Downloads/echo_ca.csv")
+echo_sub <- echo %>% filter(FAC_NAICS_CODES == 922140 | is.na(FAC_NAICS_CODES) | FAC_NAICS_CODES =="")
 ```
 
 ```{r}
 prison <- read_csv("/Users/lpoirier/Downloads/Prison_Boundaries.csv")
 prison_ca <- prison %>% filter(STATE == "CA")
-```
-```{r}
-View(prison_ca)
 ```
 
 
@@ -48,7 +46,7 @@ Remaining issues: ____ + "7th Floor"
 
 
 ```{r}
-prison_sub <- prison_ca[1:10,]
+prison_sub <- prison_ca[1:100,]
 colnames(prison_sub)[4]<-"FAC_NAME"
 colnames(prison_sub)[5]<-"FAC_STREET"
 colnames(prison_sub)[6]<-"FAC_CITY"
@@ -59,53 +57,61 @@ colnames(prison_sub)[14]<-"FAC_COUNTY"
 ```
 
 ```{r}
-echo$FAC_COUNTY<-preprocText(echo$FAC_COUNTY, convert_text=TRUE, tolower=TRUE, remove_whitespace=TRUE, remove_punctuation=TRUE)
+echo_sub$FAC_COUNTY<-preprocText(echo_sub$FAC_COUNTY, convert_text=TRUE, tolower=TRUE, remove_whitespace=TRUE, remove_punctuation=TRUE)
 
-echo$FAC_COUNTY <- gsub(" county", "", echo$FAC_COUNTY)
+echo_sub$FAC_COUNTY <- gsub(" county", "", echo_sub$FAC_COUNTY)
 ```
 
 ```{r}
-echo$FAC_CITY<-preprocText(echo$FAC_CITY, convert_text=TRUE, tolower=TRUE, remove_whitespace=TRUE, remove_punctuation=TRUE)
+echo_sub$FAC_CITY<-preprocText(echo_sub$FAC_CITY, convert_text=TRUE, tolower=TRUE, remove_whitespace=TRUE, remove_punctuation=TRUE)
 
-echo$FAC_CITY <- gsub(" ca$", "", echo$FAC_CITY)
-echo$FAC_CITY <- gsub("afb", "air force base", echo$FAC_CITY)
-echo$FAC_CITY <- gsub("calif ", "california ", echo$FAC_CITY)
-echo$FAC_CITY <- gsub("spg", "springs", echo$FAC_CITY)
-echo$FAC_CITY <- gsub("vly", "valley", echo$FAC_CITY)
+echo_sub$FAC_CITY <- gsub(" ca$", "", echo_sub$FAC_CITY)
+echo_sub$FAC_CITY <- gsub("afb", "air force base", echo_sub$FAC_CITY)
+echo_sub$FAC_CITY <- gsub("calif ", "california ", echo_sub$FAC_CITY)
+echo_sub$FAC_CITY <- gsub("spg", "springs", echo_sub$FAC_CITY)
+echo_sub$FAC_CITY <- gsub("vly", "valley", echo_sub$FAC_CITY)
 
-echo$FAC_CITY <- gsub("^s ", "south ", echo$FAC_CITY)
-echo$FAC_CITY <- gsub("^e ", "east ", echo$FAC_CITY)
-echo$FAC_CITY <- gsub("^n ", "north ", echo$FAC_CITY)
-echo$FAC_CITY <- gsub("^w ", "west ", echo$FAC_CITY)
+echo_sub$FAC_CITY <- gsub("^s ", "south ", echo_sub$FAC_CITY)
+echo_sub$FAC_CITY <- gsub("^e ", "east ", echo_sub$FAC_CITY)
+echo_sub$FAC_CITY <- gsub("^n ", "north ", echo_sub$FAC_CITY)
+echo_sub$FAC_CITY <- gsub("^w ", "west ", echo_sub$FAC_CITY)
 ```
 
 ```{r}
-echo$FAC_STREET<-preprocText(echo$FAC_STREET, convert_text=TRUE, tolower=TRUE, remove_whitespace=TRUE, usps_address=TRUE, remove_punctuation=TRUE)
+echo_sub$FAC_STREET<-preprocText(echo_sub$FAC_STREET, convert_text=TRUE, tolower=TRUE, remove_whitespace=TRUE, usps_address=TRUE, remove_punctuation=TRUE)
 
-echo$FAC_STREET <- gsub(" s ", " south ", echo$FAC_STREET)
-echo$FAC_STREET <- gsub(" e ", " east ", echo$FAC_STREET)
-echo$FAC_STREET <- gsub(" n ", " north ", echo$FAC_STREET)
-echo$FAC_STREET <- gsub(" w ", " west ", echo$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" s ", " south ", echo_sub$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" e ", " east ", echo_sub$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" n ", " north ", echo_sub$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" w ", " west ", echo_sub$FAC_STREET)
 
 #Remove suites and units from addresses
-echo$FAC_STREET <- gsub(" ste .*", "", echo$FAC_STREET)
-echo$FAC_STREET <- gsub(" stes .*", "", echo$FAC_STREET)
-echo$FAC_STREET <- gsub(" unit .*", "", echo$FAC_STREET)
-echo$FAC_STREET <- gsub(" suite .*", "", echo$FAC_STREET)
-echo$FAC_STREET <- gsub(" apt .*", "", echo$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" ste .*", "", echo_sub$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" stes .*", "", echo_sub$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" unit .*", "", echo_sub$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" suite .*", "", echo_sub$FAC_STREET)
+echo_sub$FAC_STREET <- gsub(" apt .*", "", echo_sub$FAC_STREET)
 
-echo$FAC_STREET <- gsub("highway", "hwy", echo$FAC_STREET)
+echo_sub$FAC_STREET <- gsub("highway", "hwy", echo_sub$FAC_STREET)
 ```
 
 ```{r}
 prison_sub <- prison_sub %>% separate(FAC_STREET, into = c("FAC_NUM", "FAC_STREET"), sep = "(?<=[0-9])[[:space:]]")
-echo <- echo %>% separate(FAC_STREET, into = c("FAC_NUM", "FAC_STREET"), sep = "(?<=[0-9])[[:space:]]")
+echo_sub <- echo_sub %>% separate(FAC_STREET, into = c("FAC_NUM", "FAC_STREET"), sep = "(?<=[0-9])[[:space:]]")
 ```
 Issues: 30755c auld rd --> not a master regexer: how to separate by string that immediately follows a set of digits that *may* contain a character
 
 ```{r}
-matches <- fastLink(prison_sub, echo, varnames = c("FAC_NAME", "FAC_NUM", "FAC_STREET", "FAC_STATE", "FAC_CITY",  "FAC_ZIP"), stringdist.match = c("FAC_NAME", "FAC_STREET", "FAC_CITY"), partial.match = c("FAC_NAME"), cut.a = 0.95, cut.p = 0.8, jw.weight = 0.25 )
+matches <- fastLink(prison_sub, echo_sub, varnames = c("FAC_NAME", "FAC_NUM", "FAC_STREET", "FAC_STATE", "FAC_CITY",  "FAC_ZIP"), stringdist.match = c("FAC_NAME", "FAC_STREET", "FAC_CITY"), partial.match = c("FAC_NAME"), cut.a = 0.95, cut.p = 0.8, jw.weight = 0.25 )
 ```
 
 
+```{r}
+
+echo_names <- sapply(matches[["matches"]][["inds.b"]], function(x){echo_sub[x, 3]})
+echo_address <- sapply(matches[["matches"]][["inds.b"]], function(x){paste(echo_sub[x, 4], echo_sub[x, 5], echo_sub[x, 6], echo_sub[x, 7], sep=" ")})
+pris_names <- sapply(matches[["matches"]][["inds.a"]], function(x){prison_sub[x, 4]$FAC_NAME})
+pris_address <- sapply(matches[["matches"]][["inds.a"]], function(x){paste(prison_sub[x, 5]$FAC_NUM, prison_sub[x, 6]$FAC_STREET, prison_sub[x, 7]$FAC_CITY, prison_sub[x, 8]$FAC_STATE, sep=" ")})
+View(data.frame(echo_names, pris_names, echo_address, pris_address))
+```
 
